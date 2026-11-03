@@ -1,0 +1,32 @@
+import re
+from playwright.sync_api import sync_playwright
+B="http://127.0.0.1:8080"; O="/home/claude/cefms/docs/screens/"
+with sync_playwright() as p:
+    br=p.chromium.launch(executable_path="/opt/pw-browsers/chromium-1194/chrome-linux/chrome",args=["--no-sandbox"])
+    def ctx(): return br.new_context(viewport={"width":1280,"height":800})
+    c=ctx(); pg=c.new_page()
+    def shot(n,full=False): pg.screenshot(path=O+n+".png",full_page=full)
+    pg.goto(B+"/"); shot("01_home",True)
+    pg.goto(B+"/signup.php"); pg.fill("#fullName","Nur Alya"); pg.fill("#email","alya@mail.com"); pg.fill("#phone","0171112233"); pg.fill("#password","Alya1234"); pg.fill("#password2","Alya1234"); shot("02_signup")
+    pg.goto(B+"/login.php"); shot("03_login")
+    pg.goto(B+"/calendar.php?m=2026-11"); shot("04_calendar",True)
+    pg.goto(B+"/event.php?id=1"); shot("05_event_guest")
+    pg.goto(B+"/login.php"); pg.fill("#email","aisyah@mail.com"); pg.fill("#password","Aisyah@123"); pg.click("button[type=submit]"); pg.wait_for_url("**/dashboard.php")
+    pg.goto(B+"/event.php?id=1"); pg.fill("#qty","2"); shot("06_event_member"); pg.click("text=Reserve / Buy Ticket"); pg.wait_for_url("**/payment.php*"); shot("07_payment")
+    pg.check("input[value='E-Wallet']"); pg.click("text=Pay RM"); pg.wait_for_url("**/ticket.php*"); shot("08_ticket")
+    pg.goto(B+"/dashboard.php"); shot("09_dashboard",True)
+    # admin
+    a=ctx(); ap=a.new_page()
+    def ashot(n,full=False): ap.screenshot(path=O+n+".png",full_page=full)
+    ap.goto(B+"/admin/login.php"); ashot("10_admin_login")
+    ap.fill("#email","siti@organizer.my"); ap.fill("#password","Organizer@123"); ap.click("button[type=submit]"); ap.wait_for_url("**/admin/index.php")
+    ashot("11_org_dashboard")
+    ap.goto(B+"/admin/event_create.php"); ap.fill("#title","Festival Layang-Layang Pasir Gudang"); ap.fill("#description","Kite festival with traditional wau and craft stalls."); ap.select_option("#category","Craft"); ap.fill("#ticketPrice","10"); ap.fill("#totalSeats","200"); ap.fill("#venue","Pantai Teluk Danga, Johor Bahru"); ap.fill("#start","2026-12-26T10:00"); ap.fill("#end","2026-12-26T18:00"); ashot("12_create_event",True)
+    ap.click("text=Submit event"); ap.wait_for_url("**/history.php"); ashot("13_history")
+    ap.click("text=Log Out")
+    ap.goto(B+"/admin/login.php"); ap.fill("#email","manager@cefms.my"); ap.fill("#password","Manager@123"); ap.click("button[type=submit]"); ap.wait_for_url("**/admin/index.php"); ashot("14_mgr_dashboard")
+    ap.goto(B+"/admin/events.php"); ashot("15_manage_events",True)
+    ap.goto(B+"/admin/schedule.php?edit=7"); ap.fill("#venue","Dataran Bandaraya Johor Bahru"); ap.fill("#start","2026-11-14T12:00"); ap.fill("#end","2026-11-14T14:00"); ap.click("text=Save schedule"); ashot("16_schedule_clash",True)
+    ap.goto(B+"/admin/organizers.php"); ashot("17_organizers",True)
+    br.close()
+print("done")
